@@ -57,7 +57,7 @@
 		"react-dom": "^19.2.0",
 		"streamdown": "^1.6.8",
 		"tailwind-merge": "^3.4.0",
-		"workers-ai-provider": "^2.0.0",
+		"workers-ai-provider": "^2.0.2",
 		"zod": "^3.25.76"
 	}
 }
