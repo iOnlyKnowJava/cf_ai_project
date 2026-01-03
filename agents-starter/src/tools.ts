@@ -8,6 +8,7 @@ import { z } from "zod/v3";
 import type { Chat } from "./server";
 import { getCurrentAgent } from "agents";
 import { scheduleSchema } from "agents/schedule";
+import { flushCompileCache } from "module";
 
 /**
  * Weather information tool that requires human confirmation
@@ -25,11 +26,11 @@ const getWeatherInformation = tool({
  * This is suitable for low-risk operations that don't need oversight
  */
 const getLocalTime = tool({
-  description: "get the local time for a specified location",
+  description: "get the local time and date for a specified location",
   inputSchema: z.object({ BCP_47_language_tag: z.string(), ISO_8601_timezone: z.string() }),
   execute: async ({ BCP_47_language_tag, ISO_8601_timezone }) => {
     console.log(`Getting local time for ${ISO_8601_timezone}`);
-    return new Intl.DateTimeFormat(BCP_47_language_tag,{timeZone:ISO_8601_timezone}).format(new Date()).toString();
+    return new Intl.DateTimeFormat(BCP_47_language_tag,{dateStyle:"full", timeStyle:"long", timeZone:ISO_8601_timezone}).format(new Date()).toString();
   }
 });
 
