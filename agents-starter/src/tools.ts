@@ -26,10 +26,10 @@ const getWeatherInformation = tool({
  */
 const getLocalTime = tool({
   description: "get the local time for a specified location",
-  inputSchema: z.object({ location: z.string() }),
-  execute: async ({ location }) => {
-    console.log(`Getting local time for ${location}`);
-    return "10am";
+  inputSchema: z.object({ BCP_47_language_tag: z.string(), ISO_8601_timezone: z.string() }),
+  execute: async ({ BCP_47_language_tag, ISO_8601_timezone }) => {
+    console.log(`Getting local time for ${ISO_8601_timezone}`);
+    return new Intl.DateTimeFormat(BCP_47_language_tag,{timeZone:ISO_8601_timezone}).format(new Date()).toString();
   }
 });
 
