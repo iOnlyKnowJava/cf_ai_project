@@ -8,7 +8,6 @@ import { z } from "zod/v3";
 import type { Chat } from "./server";
 import { getCurrentAgent } from "agents";
 import { scheduleSchema } from "agents/schedule";
-import { flushCompileCache } from "module";
 
 /**
  * Weather information tool that requires human confirmation

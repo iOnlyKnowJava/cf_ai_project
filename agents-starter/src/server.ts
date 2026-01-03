@@ -38,7 +38,7 @@ export class Chat extends AIChatAgent<Env> {
     // Collect all tools, including MCP tools
     const allTools = {
       ...tools,
-      ...this.mcp.getAITools()
+      // ...this.mcp.getAITools()
     };
 
     const stream = createUIMessageStream({
