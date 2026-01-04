@@ -14,8 +14,8 @@ import { scheduleSchema } from "agents/schedule";
  * When invoked, this will present a confirmation dialog to the user
  */
 const getWeatherInformation = tool({
-  description: "show the weather in a given city to the user",
-  inputSchema: z.object({ city: z.string() })
+  description: "show the weather at a given city to the user",
+  inputSchema: z.object({ city: z.string(), latitude: z.number().int(), longitude: z.number().int() })
   // Omitting execute function makes this tool require human confirmation
 });
 
@@ -126,8 +126,13 @@ export const tools = {
  * Each function here corresponds to a tool above that doesn't have an execute function
  */
 export const executions = {
-  getWeatherInformation: async ({ city }: { city: string }) => {
+  getWeatherInformation: async ({ city, latitude, longitude }: { city: string, latitude: number, longitude: number }) => {
     console.log(`Getting weather information for ${city}`);
-    return `The weather in ${city} is sunny`;
+    let response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,rain,showers,snowfall,wind_speed_10m,wind_direction_10m,wind_gusts_10m`);
+    if(!response.ok){
+      return `Unable to fetch weather information at ${city}`;
+    }
+    let info = await response.json();
+    return info;
   }
 };
