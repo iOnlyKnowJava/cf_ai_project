@@ -29,14 +29,6 @@
 			}
 		]
 	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": [
-				"Chat", "MessageStorage"
-			]
-		}
-	],
 	"observability": {
 		"enabled": true
 	}

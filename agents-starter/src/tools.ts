@@ -12,13 +12,13 @@ import { scheduleSchema } from "agents/schedule";
 import {env} from "cloudflare:workers"
 
 const createMessageInBottle = tool({
-  description: "Create a message in a bottle for users to later find",
+  description: "Create and store a message in a bottle for users to later find",
   inputSchema: z.object({ message: z.string()})
   // Omitting execute function makes this tool require human confirmation
 });
 
 const getMessageInBottle = tool({
-  description: "Obtain a message in a bottle which was previously created",
+  description: "Obtain a message in a bottle which was previously created, returning it to the user",
   inputSchema: z.object({})
   // Omitting execute function makes this tool require human confirmation
 });
