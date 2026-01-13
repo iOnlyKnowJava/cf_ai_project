@@ -9,6 +9,20 @@ import type { Chat } from "./server";
 import { getCurrentAgent } from "agents";
 import { scheduleSchema } from "agents/schedule";
 
+import {env} from "cloudflare:workers"
+
+const createMessageInBottle = tool({
+  description: "Create a message in a bottle for users to later find",
+  inputSchema: z.object({ message: z.string()})
+  // Omitting execute function makes this tool require human confirmation
+});
+
+const getMessageInBottle = tool({
+  description: "Obtain a message in a bottle which was previously created",
+  inputSchema: z.object({})
+  // Omitting execute function makes this tool require human confirmation
+});
+
 /**
  * Weather information tool that requires human confirmation
  * When invoked, this will present a confirmation dialog to the user
@@ -113,6 +127,8 @@ const cancelScheduledTask = tool({
  * These will be provided to the AI model to describe available capabilities
  */
 export const tools = {
+  createMessageInBottle,
+  getMessageInBottle,
   getWeatherInformation,
   getLocalTime,
   scheduleTask,
@@ -126,6 +142,16 @@ export const tools = {
  * Each function here corresponds to a tool above that doesn't have an execute function
  */
 export const executions = {
+  createMessageInBottle: async ({message}: {message:string}) => {
+    const msgId=env.MessageStorage.idFromName("allMessages");
+    const stub = env.MessageStorage.get(msgId);
+    return await stub.addMessage(message);
+  },
+  getMessageInBottle: async () => {
+    const msgId=env.MessageStorage.idFromName("allMessages");
+    const stub = env.MessageStorage.get(msgId);
+    return await stub.getMessage();
+  },
   getWeatherInformation: async ({ city, latitude, longitude }: { city: string, latitude: number, longitude: number }) => {
     console.log(`Getting weather information for ${city}`);
     let response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,rain,showers,snowfall,wind_speed_10m,wind_direction_10m,wind_gusts_10m`);

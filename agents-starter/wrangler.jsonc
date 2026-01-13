@@ -22,6 +22,10 @@
 			{
 				"name": "Chat",
 				"class_name": "Chat"
+			},
+			{
+				"name": "MessageStorage",
+				"class_name": "MessageStorage"
 			}
 		]
 	},
@@ -29,7 +33,7 @@
 		{
 			"tag": "v1",
 			"new_sqlite_classes": [
-				"Chat"
+				"Chat", "MessageStorage"
 			]
 		}
 	],

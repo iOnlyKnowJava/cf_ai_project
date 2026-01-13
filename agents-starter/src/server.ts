@@ -16,9 +16,53 @@ import {
 import { createWorkersAI } from 'workers-ai-provider';
 import { processToolCalls, cleanupMessages } from "./utils";
 import { tools, executions } from "./tools";
-import { env } from "cloudflare:workers";
+import { env, DurableObject } from "cloudflare:workers";
 const workersai = createWorkersAI({ binding: env.AI });
 const model = workersai("@cf/meta/llama-3.3-70b-instruct-fp8-fast");
+
+export class MessageStorage extends DurableObject<Env> {
+  constructor(ctx: DurableObjectState, env: Env) {
+    // Required, as we're extending the base class.
+    super(ctx, env)
+    this.ctx.storage.sql.exec(`
+      CREATE TABLE IF NOT EXISTS messages(
+        id  INTEGER NOT NULL PRIMARY KEY,
+        msg TEXT
+      );
+    `);
+  }
+  async addMessage(msg:string):Promise<string>{
+    if(this.ctx.storage.sql.exec(`
+      SELECT COUNT(*) FROM messages AS cnt;
+    `).raw().next().value[1]>100){
+      let entry = this.ctx.storage.sql.exec(`
+        SELECT * FROM messages LIMIT 1 ORDER BY RAND();
+      `).raw().next().value;
+      this.ctx.storage.sql.exec(`
+        DELETE FROM messages WHERE id = ${entry[0]};
+      `)
+    }
+    this.ctx.storage.sql.exec(`
+      INSERT INTO messages (msg) VALUES
+        (${msg});
+    `);
+    return "Message successfully added";
+  }
+  async getMessage():Promise<string>{
+    if(this.ctx.storage.sql.exec(`
+      SELECT COUNT(*) FROM messages AS cnt;
+    `).raw().next().value[1]==0){
+      return "No currently existing messages in bottles";
+    }
+    let entry = this.ctx.storage.sql.exec(`
+      SELECT * FROM messages ORDER BY RAND() LIMIT 1;
+    `).raw().next().value;
+    this.ctx.storage.sql.exec(`
+      DELETE FROM messages WHERE id = ${entry[0]};
+    `)
+    return entry[1];
+  }
+}
 
 /**
  * Chat Agent implementation that handles real-time AI chat interactions
