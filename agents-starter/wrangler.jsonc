@@ -29,6 +29,20 @@
 			}
 		]
 	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"Chat"
+			]
+		},
+		{
+			"tag": "v9",
+			"new_sqlite_classes": [
+				"MessageStorage"
+			]
+		}
+	],
 	"observability": {
 		"enabled": true
 	}

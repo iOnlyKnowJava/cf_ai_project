@@ -28,7 +28,7 @@ const getMessageInBottle = tool({
  * When invoked, this will present a confirmation dialog to the user
  */
 const getWeatherInformation = tool({
-  description: "show the weather at a given city to the user",
+  description: "show the weather at a given city to the user given the city's name, latitude, and longitude",
   inputSchema: z.object({ city: z.string(), latitude: z.number().int(), longitude: z.number().int() })
   // Omitting execute function makes this tool require human confirmation
 });
@@ -39,7 +39,7 @@ const getWeatherInformation = tool({
  * This is suitable for low-risk operations that don't need oversight
  */
 const getLocalTime = tool({
-  description: "get the local time and date for a specified location",
+  description: "get the local time and date for a specified location given the BCP 47 language tag the date should be formatted in and the ISO 8601 timezone of the location",
   inputSchema: z.object({ BCP_47_language_tag: z.string(), ISO_8601_timezone: z.string() }),
   execute: async ({ BCP_47_language_tag, ISO_8601_timezone }) => {
     console.log(`Getting local time for ${ISO_8601_timezone}`);
@@ -143,11 +143,13 @@ export const tools = {
  */
 export const executions = {
   createMessageInBottle: async ({message}: {message:string}) => {
+    console.log(`Creating message in a bottle...`);
     const msgId=env.MessageStorage.idFromName("allMessages");
     const stub = env.MessageStorage.get(msgId);
     return await stub.addMessage(message);
   },
   getMessageInBottle: async () => {
+    console.log(`Getting message in a bottle...`);
     const msgId=env.MessageStorage.idFromName("allMessages");
     const stub = env.MessageStorage.get(msgId);
     return await stub.getMessage();

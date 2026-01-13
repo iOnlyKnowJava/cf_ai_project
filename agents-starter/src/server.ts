@@ -104,7 +104,16 @@ export class Chat extends AIChatAgent<Env> {
 
 ${getSchedulePrompt({ date: new Date() })}
 
-If the user asks to schedule a task, use the schedule tool to schedule the task.
+If the user asks to schedule a task, use the schedule tool to schedule the task. If the user asks for the weather
+at a given location, you must find the longitude and latitude of the given location before using the getWeatherInformation tool
+to find the local weather at that location. For example, if the user asks for the weather in Austin, you must determine
+that the latitude and longitude of Austin is 30 and -97 respectively, and call getWeatherInformation({"city":"Austin","latitude":30,"longitude":-97}).
+For the local time tool, you must find the BCP 47 language tag the date should be formatted in and the ISO 8601
+timezone of the given location, then call the getLocalTime tool using this information. For example, if the user asks
+for the local time in Shanghai, you must determine that the appropriate BCP 47 language tag to use is "zh-CN" and the requested timezone
+is "Asia/Shanghai", then call getLocalTime("BCP_47_language_tag": "zh-CN","ISO_8601_timezone": "Asia/Shanghai").
+If the user asks to send a message in a bottle, use the createMessageInBottle tool to create a message in a bottle with the message.
+If the user asks to receive a message in a bottle, use the getMessageInBottle tool to obtain a message in a bottle which contains a message for the user.
 `,
 
           messages: convertToModelMessages(processedMessages),
