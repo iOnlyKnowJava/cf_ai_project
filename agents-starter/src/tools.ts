@@ -12,13 +12,13 @@ import { scheduleSchema } from "agents/schedule";
 import {env} from "cloudflare:workers"
 
 const createMessageInBottle = tool({
-  description: "Create and store a message in a bottle for users to later find",
+  description: "Creates a message in a bottle containing the message given by the user. Should be called if user asks to create a message in a bottle. This tool returns the status of this operation.",
   inputSchema: z.object({ message: z.string()})
   // Omitting execute function makes this tool require human confirmation
 });
 
 const getMessageInBottle = tool({
-  description: "Obtain a message in a bottle which was previously created, returning it to the user",
+  description: "Obtains a message in a bottle and returns the message found inside. Should be called if user asks to get a message in a bottle.",
   inputSchema: z.object({})
   // Omitting execute function makes this tool require human confirmation
 });
@@ -28,8 +28,8 @@ const getMessageInBottle = tool({
  * When invoked, this will present a confirmation dialog to the user
  */
 const getWeatherInformation = tool({
-  description: "show the weather at a given city to the user given the city's name, latitude, and longitude",
-  inputSchema: z.object({ city: z.string(), latitude: z.number().int(), longitude: z.number().int() })
+  description: "returns the weather information of a given location. Should be called if user asks for the weather at any location.",
+  inputSchema: z.object({ location: z.string() })
   // Omitting execute function makes this tool require human confirmation
 });
 
@@ -39,7 +39,7 @@ const getWeatherInformation = tool({
  * This is suitable for low-risk operations that don't need oversight
  */
 const getLocalTime = tool({
-  description: "get the local time and date for a specified location given the BCP 47 language tag the date should be formatted in and the ISO 8601 timezone of the location",
+  description: "returns the local time and date for a specified timezone given the BCP 47 language tag the date should be formatted in and the requested ISO 8601 timezone. Should be called if user asks for the local time at any given timezone.",
   inputSchema: z.object({ BCP_47_language_tag: z.string(), ISO_8601_timezone: z.string() }),
   execute: async ({ BCP_47_language_tag, ISO_8601_timezone }) => {
     console.log(`Getting local time for ${ISO_8601_timezone}`);
@@ -146,19 +146,33 @@ export const executions = {
     console.log(`Creating message in a bottle...`);
     const msgId=env.MessageStorage.idFromName("allMessages");
     const stub = env.MessageStorage.get(msgId);
-    return await stub.addMessage(message);
+    const response = await stub.addMessage(message);
+    console.log(`Finished creating message in bottle`);
+    return response;
   },
   getMessageInBottle: async () => {
     console.log(`Getting message in a bottle...`);
     const msgId=env.MessageStorage.idFromName("allMessages");
     const stub = env.MessageStorage.get(msgId);
-    return await stub.getMessage();
+    const response = await stub.getMessage();
+    console.log(`Finished getting message in bottle`);
+    return response;
   },
-  getWeatherInformation: async ({ city, latitude, longitude }: { city: string, latitude: number, longitude: number }) => {
-    console.log(`Getting weather information for ${city}`);
-    let response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,rain,showers,snowfall,wind_speed_10m,wind_direction_10m,wind_gusts_10m`);
+  getWeatherInformation: async ({ location }: { location:string }) => {
+    console.log(`Getting weather information for ${location}`);
+    let url = `https://geocode.maps.co/search?q=${location}&api_key=${env.MAPS_CO_KEY}`;
+    url = encodeURI(url);
+    let response = await fetch(url);
     if(!response.ok){
-      return `Unable to fetch weather information at ${city}`;
+      return `Unable to fetch weather information at ${location}`;
+    }
+    let loc_info:{lat:number,lon:number}[] = await response.json();
+    if(loc_info.length<1){
+      return `Unable to fetch weather information at ${location}`;
+    }
+    response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc_info[0].lat}&longitude=${loc_info[0].lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,is_day,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,rain,showers,snowfall,wind_speed_10m,wind_direction_10m,wind_gusts_10m`);
+    if(!response.ok){
+      return `Unable to fetch weather information at ${location}`;
     }
     let info = await response.json();
     return info;

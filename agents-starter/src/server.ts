@@ -24,42 +24,49 @@ export class MessageStorage extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     // Required, as we're extending the base class.
     super(ctx, env)
+    console.log("Creating table");
     this.ctx.storage.sql.exec(`
       CREATE TABLE IF NOT EXISTS messages(
         id  INTEGER NOT NULL PRIMARY KEY,
         msg TEXT
       );
     `);
+    console.log("Finished initializing table");
   }
   async addMessage(msg:string):Promise<string>{
+    console.log("Checking that max capacity not reached");
     if(this.ctx.storage.sql.exec(`
-      SELECT COUNT(*) FROM messages AS cnt;
+      SELECT COUNT(*) FROM messages;
     `).raw().next().value[1]>100){
+      console.log("Max capacity reached, removing an entry to make space");
       let entry = this.ctx.storage.sql.exec(`
-        SELECT * FROM messages LIMIT 1 ORDER BY RAND();
+        SELECT * FROM messages ORDER BY RANDOM() LIMIT 1;
       `).raw().next().value;
       this.ctx.storage.sql.exec(`
-        DELETE FROM messages WHERE id = ${entry[0]};
-      `)
+        DELETE FROM messages WHERE id = ?;`, entry[0]);
+      console.log("One entry removed");
     }
+    console.log("Inserting message into table");
     this.ctx.storage.sql.exec(`
       INSERT INTO messages (msg) VALUES
-        (${msg});
-    `);
+        ('?');`, msg);
+    console.log("Finished adding message");
     return "Message successfully added";
   }
   async getMessage():Promise<string>{
+    console.log("Checking that a message in a bottle exists");
     if(this.ctx.storage.sql.exec(`
       SELECT COUNT(*) FROM messages AS cnt;
     `).raw().next().value[1]==0){
       return "No currently existing messages in bottles";
     }
+    console.log("Getting random message...");
     let entry = this.ctx.storage.sql.exec(`
       SELECT * FROM messages ORDER BY RAND() LIMIT 1;
     `).raw().next().value;
     this.ctx.storage.sql.exec(`
-      DELETE FROM messages WHERE id = ${entry[0]};
-    `)
+      DELETE FROM messages WHERE id = ?;`, entry[0]);
+    console.log("Obtained message");
     return entry[1];
   }
 }
@@ -105,10 +112,8 @@ export class Chat extends AIChatAgent<Env> {
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task. If the user asks for the weather
-at a given location, you must find the longitude and latitude of the given location before using the getWeatherInformation tool
-to find the local weather at that location. For example, if the user asks for the weather in Austin, you must determine
-that the latitude and longitude of Austin is 30 and -97 respectively, and call getWeatherInformation({"city":"Austin","latitude":30,"longitude":-97}).
-For the local time tool, you must find the BCP 47 language tag the date should be formatted in and the ISO 8601
+at a given location, use the getWeatherInformation tool to find the local weather at that location. For example, if the user asks for the weather in Austin,
+call getWeatherInformation({"location":"Austin"}). For the local time tool, you must find the BCP 47 language tag the date should be formatted in and the ISO 8601
 timezone of the given location, then call the getLocalTime tool using this information. For example, if the user asks
 for the local time in Shanghai, you must determine that the appropriate BCP 47 language tag to use is "zh-CN" and the requested timezone
 is "Asia/Shanghai", then call getLocalTime("BCP_47_language_tag": "zh-CN","ISO_8601_timezone": "Asia/Shanghai").
@@ -124,7 +129,7 @@ If the user asks to receive a message in a bottle, use the getMessageInBottle to
           onFinish: onFinish as unknown as StreamTextOnFinishCallback<
             typeof allTools
           >,
-          stopWhen: stepCountIs(10)
+          stopWhen: stepCountIs(30)
         });
 
         writer.merge(result.toUIMessageStream());

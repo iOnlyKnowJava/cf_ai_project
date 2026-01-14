@@ -33,13 +33,7 @@
 		{
 			"tag": "v1",
 			"new_sqlite_classes": [
-				"Chat"
-			]
-		},
-		{
-			"tag": "v9",
-			"new_sqlite_classes": [
-				"MessageStorage"
+				"Chat","MessageStorage"
 			]
 		}
 	],
