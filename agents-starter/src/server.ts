@@ -35,10 +35,12 @@ export class MessageStorage extends DurableObject<Env> {
   }
   async addMessage(msg:string):Promise<string>{
     console.log("Checking that max capacity not reached");
-    if(this.ctx.storage.sql.exec(`
+    let entries = this.ctx.storage.sql.exec(`
       SELECT COUNT(*) FROM messages;
-    `).raw().next().value[1]>100){
-      console.log("Max capacity reached, removing an entry to make space");
+    `).raw().next().value[0];
+    console.log("Entries: "+entries);
+    if(entries>100){
+      console.log("Max capacity reached, randomly removing an entry to make space");
       let entry = this.ctx.storage.sql.exec(`
         SELECT * FROM messages ORDER BY RANDOM() LIMIT 1;
       `).raw().next().value;
@@ -55,9 +57,11 @@ export class MessageStorage extends DurableObject<Env> {
   }
   async getMessage():Promise<string>{
     console.log("Checking that a message in a bottle exists");
-    if(this.ctx.storage.sql.exec(`
-      SELECT COUNT(*) FROM messages AS cnt;
-    `).raw().next().value[1]==0){
+    let entries = this.ctx.storage.sql.exec(`
+      SELECT COUNT(*) FROM messages;
+    `).raw().next().value[0];
+    console.log("Entries: "+entries);
+    if(entries==0){
       return "No currently existing messages in bottles";
     }
     console.log("Getting random message...");
@@ -114,12 +118,12 @@ ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task. If the user asks for the weather
 at a given location, use the getWeatherInformation tool to find the local weather at that location. For example, if the user asks for the weather in Austin,
-call getWeatherInformation({"location":"Austin"}). For the local time tool, you must find the BCP 47 language tag the date should be formatted in and the ISO 8601
-timezone of the given location, then call the getLocalTime tool using this information. For example, if the user asks
-for the local time in Shanghai, you must determine that the appropriate BCP 47 language tag to use is "zh-CN" and the requested timezone
+call getWeatherInformation({"location":"Austin"}). For the getLocalTime tool, you must find the BCP 47 language tag and the ISO 8601
+timezone of the user's requested location, then call the getLocalTime tool using this information. For example, if the user asks
+for the local time in Shanghai, you must determine that the appropriate BCP 47 language tag to use is "zh-CN" and that the requested timezone
 is "Asia/Shanghai", then call getLocalTime("BCP_47_language_tag": "zh-CN","ISO_8601_timezone": "Asia/Shanghai").
-If the user asks to send a message in a bottle, use the createMessageInBottle tool to create a message in a bottle with the message.
-If the user asks to receive a message in a bottle, use the getMessageInBottle tool to obtain a message in a bottle which contains a message for the user.
+If the user asks to send or create a message in a bottle, use the createMessageInBottle tool to create a message in a bottle with the message.
+If the user asks to receive/get/fetch a message in a bottle, use the getMessageInBottle tool to obtain a message in a bottle which contains a message.
 `,
 
           messages: convertToModelMessages(processedMessages),
