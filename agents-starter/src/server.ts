@@ -48,8 +48,8 @@ export class MessageStorage extends DurableObject<Env> {
     }
     console.log("Inserting message into table");
     this.ctx.storage.sql.exec(`
-      INSERT INTO messages (msg) VALUES
-        ('?');`, msg);
+      INSERT INTO messages (msg)
+      VALUES(?);`, msg);
     console.log("Finished adding message");
     return "Message successfully added";
   }
@@ -62,8 +62,9 @@ export class MessageStorage extends DurableObject<Env> {
     }
     console.log("Getting random message...");
     let entry = this.ctx.storage.sql.exec(`
-      SELECT * FROM messages ORDER BY RAND() LIMIT 1;
+      SELECT * FROM messages ORDER BY RANDOM() LIMIT 1;
     `).raw().next().value;
+    console.log("Deleting message from database");
     this.ctx.storage.sql.exec(`
       DELETE FROM messages WHERE id = ?;`, entry[0]);
     console.log("Obtained message");
