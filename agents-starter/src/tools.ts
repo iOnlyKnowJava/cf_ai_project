@@ -31,7 +31,7 @@ const getMessageInBottle = tool({
 });
 
 /**
- * Weather information tool that requires human confirmation
+ * Weather information tool that executes automatically
  * When invoked, this will present a confirmation dialog to the user
  */
 const getWeatherInformation = tool({
